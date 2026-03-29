@@ -55,7 +55,7 @@ class Room(models.Model):
         unique_together = ('hostel', 'room_number')
         constraints = [
             models.CheckConstraint(
-                condition=models.Q(current_occupancy__lte=models.F('capacity')),
+                check=models.Q(current_occupancy__lte=models.F('capacity')),
                 name='occupancy_limit'
             )
         ]
