@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+/* Navbar Style */
+.top-navbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 60px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  box-sizing: border-box;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.top-navbar .logo {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(45deg, #ff7eb3, #7a6bff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.top-navbar-links {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+.top-navbar-links a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.3s;
+}
+.top-navbar-links a:hover {
+  color: #ff7eb3;
+}
+.btn-primary-custom {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(45deg, #ff7eb3, #7a6bff);
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+  font-weight: 500;
+  text-decoration: none;
+}
+.btn-primary-custom:hover {
+  transform: scale(1.05);
+  color: white;
+}
+
+.dashboard-content {
+  padding: 30px 40px 50px 40px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.table-custom {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.table-custom th {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  padding: 15px;
+}
+.table-custom td {
+  border-color: rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  vertical-align: middle;
+}
+
+</style>
+
+<header class="top-navbar">
+  <div class="logo">HostelSys</div>
+  <div class="top-navbar-links">
+    <a href="{% url 'dashboard' %}">Dashboard</a>
+    {% if is_admin %}
+        <a href="{% url 'admin:index' %}">Django Admin Portal</a>
+    {% endif %}
+    <form action="{% url 'logout' %}" method="post" style="display:inline-block; margin:0;">
+      {% csrf_token %}
+      <button class="btn-primary-custom" type="submit">Logout</button>
+    </form>
+  </div>
+</header>
+
+<main class="dashboard-content">
+  <div class="mb-5 d-flex justify-content-between align-items-center">
+    <div>
+      <h1 style="font-size: 56px; font-weight: 700; color: #fff; margin-bottom: 0;">Outpass Management</h1>
+      <p style="font-size: 18px; color: rgba(255,255,255,0.8);">{% if is_admin %}Approve and manage student outpass requests.{% else %}Apply for temporary leave from the hostel.{% endif %}</p>
+    </div>
+    <div>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-light px-4 py-2" style="border-radius: 8px;">Back to Dashboard</a>
+    </div>
+  </div>
+
+  <div class="row">
+    {% if not is_admin %}
+    <div class="col-md-4 mb-4">
+      <div class="card p-4" style="background: rgba(255,255,255,0.05); border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
+        <h3 style="color:#fff; margin-bottom: 20px;"><i class="bi bi-airplane"></i> Apply for Outpass</h3>
+        {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }}" style="padding: 10px; border-radius: 8px; margin-bottom: 15px; background: rgba(40,167,69,0.2); border:1px solid #28a745; color: #ccffcc;">
+                {{ message }}
+              </div>
+            {% endfor %}
+        {% endif %}
+        <form method="POST">
+          {% csrf_token %}
+          <div class="mb-3">
+              <label style="color:#fff; margin-bottom:5px;">Destination</label>
+              <input type="text" name="destination" class="form-control" style="background: rgba(255,255,255,0.9); border-radius: 10px;" required placeholder="City/Home">
+          </div>
+          <div class="mb-3">
+              <label style="color:#fff; margin-bottom:5px;">Reason</label>
+              <textarea name="reason" class="form-control" rows="3" style="background: rgba(255,255,255,0.9); border-radius: 10px;" required placeholder="Reason for leaving..."></textarea>
+          </div>
+          <div class="mb-3">
+              <label style="color:#fff; margin-bottom:5px;">From Date</label>
+              <input type="date" name="from_date" class="form-control" style="background: rgba(255,255,255,0.9); border-radius: 10px;" required>
+          </div>
+          <div class="mb-3">
+              <label style="color:#fff; margin-bottom:5px;">To Date</label>
+              <input type="date" name="to_date" class="form-control" style="background: rgba(255,255,255,0.9); border-radius: 10px;" required>
+          </div>
+          <button type="submit" name="apply_outpass" class="btn-primary-custom w-100" style="padding: 12px; font-size: 16px;">Submit Application</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="col-{% if is_admin %}12{% else %}8{% endif %}">
+      <div class="card p-4" style="background: rgba(255,255,255,0.05); border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
+        <h3 style="color:#fff; margin-bottom: 20px;"><i class="bi bi-clock-history"></i> {% if is_admin %}Pending & Processed Requests{% else %}My Outpass History{% endif %}</h3>
+        
+        {% if is_admin %}
+            {% if messages %}
+            <div class="mb-3">
+                {% for message in messages %}
+                  <div class="alert alert-{{ message.tags }}" style="padding: 10px; border-radius: 8px; background: rgba(40,167,69,0.2); border:1px solid #28a745; color: #ccffcc;">
+                    {{ message }}
+                  </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endif %}
+
+        <div class="table-responsive">
+          <table class="table table-custom mb-0">
+            <thead>
+              <tr>
+                {% if is_admin %}<th>Student</th>{% endif %}
+                <th>Destination</th>
+                <th>Reason</th>
+                <th>Dates</th>
+                <th>Status</th>
+                <th>Admin Note</th>
+                {% if is_admin %}<th>Action</th>{% endif %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for op in outpasses_list %}
+              <tr>
+                {% if is_admin %}
+                <td>
+                    <strong>{{ op.student.username }}</strong><br>
+                    <small style="color:#aaa;">Room: {{ op.student.student_profile.room.room_number|default:"-" }}</small>
+                </td>
+                {% endif %}
+                <td>{{ op.destination }}</td>
+                <td style="max-width: 200px;">{{ op.reason }}</td>
+                <td>
+                    <span style="color: #4facfe;">From:</span> {{ op.from_date|date:"D, M d" }}<br>
+                    <span style="color: #ff7eb3;">To:</span> {{ op.to_date|date:"D, M d" }}
+                </td>
+                <td>
+                  <span class="badge bg-{% if op.status == 'PENDING' %}warning{% elif op.status == 'APPROVED' %}success{% else %}danger{% endif %}">
+                    {{ op.status }}
+                  </span>
+                </td>
+                <td style="max-width: 250px;">
+                    {% if op.admin_note %}
+                    <div style="font-size: 0.85rem; color: #eee; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border-left: 2px solid #7a6bff;">
+                        {{ op.admin_note }}
+                    </div>
+                    {% else %}
+                    <span style="color: rgba(255,255,255,0.4); font-size: 0.85rem;">-</span>
+                    {% endif %}
+                </td>
+                {% if is_admin %}
+                <td>
+                  <form method="POST" style="display:flex; flex-direction:column; gap:5px; margin:0; width: 220px;">
+                    {% csrf_token %}
+                    <input type="hidden" name="outpass_id" value="{{ op.id }}">
+                    <textarea name="admin_note" class="form-control form-control-sm" rows="1" placeholder="Add note to student..." style="background: rgba(255,255,255,0.9); border-radius: 6px; font-size: 0.85rem;">{{ op.admin_note|default:'' }}</textarea>
+                    <div style="display:flex; gap: 5px;">
+                        <button type="submit" name="status" value="APPROVED" class="btn btn-sm btn-success" style="flex: 1; padding: 5px; font-size: 0.8rem; border-radius: 6px;">Approve</button>
+                        <button type="submit" name="status" value="REJECTED" class="btn btn-sm btn-danger" style="flex: 1; padding: 5px; font-size: 0.8rem; border-radius: 6px;">Reject</button>
+                    </div>
+                    <!-- Hidden update field to trigger the POST code block for updating -->
+                    <input type="hidden" name="update_status" value="1">
+                  </form>
+                </td>
+                {% endif %}
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="{% if is_admin %}7{% else %}6{% endif %}" class="text-center text-muted py-4" style="color: rgba(255,255,255,0.5);">No outpass requests found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+{% endblock %}

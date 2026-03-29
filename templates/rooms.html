@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+/* Adjust Navbar for Admin */
+.admin-navbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 60px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  box-sizing: border-box;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.admin-navbar .logo {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(45deg, #7a6bff, #4facfe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.admin-navbar-links {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+.admin-navbar-links a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.3s;
+}
+.admin-navbar-links a:hover {
+  color: #4facfe;
+}
+.btn-primary-custom {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(45deg, #7a6bff, #4facfe);
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+  font-weight: 500;
+  text-decoration: none;
+}
+.btn-primary-custom:hover {
+  transform: scale(1.05);
+  color: white;
+}
+
+.dashboard-content {
+  padding: 30px 40px 50px 40px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.table-custom {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  overflow: hidden;
+}
+.table-custom th {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  padding: 15px;
+}
+.table-custom td {
+  border-color: rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  vertical-align: middle;
+}
+</style>
+
+<header class="admin-navbar">
+  <div class="logo">AdminSys</div>
+  <div class="admin-navbar-links">
+    <a href="{% url 'dashboard' %}">Dashboard</a>
+    <a href="{% url 'admin:index' %}">Django Admin Portal</a>
+    <form action="{% url 'logout' %}" method="post" style="display:inline-block; margin:0;">
+      {% csrf_token %}
+      <button class="btn-primary-custom" type="submit">Logout</button>
+    </form>
+  </div>
+</header>
+
+<main class="dashboard-content">
+  <div class="mb-5 d-flex justify-content-between align-items-center">
+    <div>
+      <h1 style="font-size: 56px; font-weight: 700; color: #fff; margin-bottom: 0;">Manage Rooms</h1>
+      <p style="font-size: 18px; color: rgba(255,255,255,0.8);">View current hostel capacity and occupancy.</p>
+    </div>
+    <div>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-light px-4 py-2" style="border-radius: 8px;">Back to Dashboard</a>
+    </div>
+  </div>
+
+  <div class="card p-4" style="background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
+    
+    <div class="table-responsive">
+      <table class="table table-custom mb-0">
+        <thead>
+          <tr>
+            <th>Hostel Block</th>
+            <th>Room Number</th>
+            <th>Room Type</th>
+            <th>Capacity</th>
+            <th>Occupancy</th>
+            <th>Availability</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rooms_list %}
+          <tr>
+            <td><strong>{{ r.hostel.name }}</strong> (Blk: {{ r.hostel.block }})</td>
+            <td style="font-size: 1.2rem;">{{ r.room_number }}</td>
+            <td>{{ r.get_room_type_display }}</td>
+            <td>{{ r.capacity }} Beds</td>
+            <td>
+                {{ r.current_occupancy }}
+            </td>
+            <td>
+              {% if r.current_occupancy < r.capacity %}
+                <span class="badge bg-success" style="font-size: 0.9rem;">Available</span>
+              {% else %}
+                <span class="badge bg-danger" style="font-size: 0.9rem;">Full</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">No rooms available. Use the Django Admin portal to add rooms.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+{% endblock %}

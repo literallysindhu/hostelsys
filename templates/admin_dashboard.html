@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+<!-- CodeMirror CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/monokai.min.css">
+
+<style>
+/* Admin Dashboard Styling to match Student */
+.admin-navbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 60px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  box-sizing: border-box;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.admin-navbar .logo {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(45deg, #7a6bff, #4facfe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.admin-navbar-links {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+.admin-navbar-links a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.3s;
+}
+.admin-navbar-links a:hover {
+  color: #4facfe;
+}
+.btn-primary-custom {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(45deg, #7a6bff, #4facfe);
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+  font-weight: 500;
+  text-decoration: none;
+}
+.btn-primary-custom:hover {
+  transform: scale(1.05);
+  color: white;
+}
+.dashboard-content {
+  padding: 30px 40px 50px 40px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.stat-card {
+  background: linear-gradient(135deg, #3a1c71 0%, #d76d77 50%, #ffaf7b 100%);
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(58, 28, 113, 0.3);
+  transition: 0.3s;
+  color: #fff;
+}
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(58, 28, 113, 0.4);
+}
+.stat-card h4 {
+  font-size: 24px;
+  font-weight: 700;
+}
+.stat-card .display-4 {
+  font-size: 48px;
+  font-weight: 700;
+  margin: 15px 0;
+}
+.table-custom {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  overflow: hidden;
+}
+.table-custom th {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  padding: 15px;
+}
+.table-custom td {
+  border-color: rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  vertical-align: middle;
+}
+</style>
+
+<header class="admin-navbar">
+  <div class="logo">AdminSys</div>
+  <div class="admin-navbar-links">
+    <a href="{% url 'admin:index' %}">Django Admin Portal</a>
+    <form action="{% url 'logout' %}" method="post" style="display:inline-block; margin:0;">
+      {% csrf_token %}
+      <button class="btn-primary-custom" type="submit">Logout</button>
+    </form>
+  </div>
+</header>
+
+<main class="dashboard-content">
+  <div class="mb-5 d-flex justify-content-between align-items-center">
+    <div>
+      <h1 style="font-size: 56px; font-weight: 700; color: #fff; margin-bottom: 0;">Admin Dashboard</h1>
+      <p style="font-size: 18px; color: rgba(255,255,255,0.8);">Quick overview of hostel operations</p>
+    </div>
+    <div style="display:flex; gap:15px; align-items:center;">
+        <a href="{% url 'outpasses' %}" class="btn-primary-custom" style="padding: 15px 30px; font-size: 16px; text-decoration: none; display: inline-block; background: linear-gradient(45deg, #dd33ff, #ff1493);">
+          <i class="bi bi-airplane"></i> Manage Outpasses
+        </a>
+        <a href="{% url 'mess_menu' %}" class="btn-primary-custom" style="padding: 15px 30px; font-size: 16px; text-decoration: none; display: inline-block; background: linear-gradient(45deg, #11998e, #38ef7d);">
+          <i class="bi bi-cup-hot"></i> View Mess Menu
+        </a>
+        <a href="{% url 'admin:index' %}" class="btn-primary-custom" style="padding: 15px 30px; font-size: 16px; text-decoration: none; display: inline-block;">
+          <i class="bi bi-database"></i> Django Admin Mode
+        </a>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-5">
+    <div class="col-md-3">
+      <div class="stat-card">
+        <h4>Rooms</h4>
+        <div class="display-4" style="font-size: 38px;">{{ room_count }}</div>
+        <a href="{% url 'rooms' %}" class="btn-primary-custom d-inline-block mt-2">Manage</a>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+        <h4>Students</h4>
+        <div class="display-4" style="font-size: 38px;">{{ student_count }}</div>
+        <a href="{% url 'students' %}" class="btn-primary-custom d-inline-block mt-2" style="background: rgba(0,0,0,0.2);">Manage</a>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card" style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
+        <h4>Complaints</h4>
+        <div class="display-4" style="font-size: 38px;">{{ complaint_count }}</div>
+        <a href="{% url 'complaints' %}" class="btn-primary-custom d-inline-block mt-2" style="background: rgba(0,0,0,0.2);">View All</a>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card" style="background: linear-gradient(135deg, #dd33ff 0%, #ff1493 100%);">
+        <h4>Outpasses</h4>
+        <div class="display-4" style="font-size: 38px;">{{ outpass_count }}</div>
+        <a href="{% url 'outpasses' %}" class="btn-primary-custom d-inline-block mt-2" style="background: rgba(0,0,0,0.2);">Approve</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-4" style="background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
+    <h3 style="color:#fff; margin-bottom: 20px;">Recent Complaints</h3>
+    <div class="table-responsive">
+      <table class="table table-custom mb-0">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Room</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in recent_complaints %}
+          <tr>
+            <td>{{ c.student.username }}</td>
+            <td>{{ c.room.room_number|default:"-" }}</td>
+            <td>{{ c.category }}</td>
+            <td>{{ c.description }}</td>
+            <td><span class="badge bg-{% if c.status == 'PENDING' %}warning{% elif c.status == 'IN_PROGRESS' %}info{% else %}success{% endif %}">{{ c.status }}</span></td>
+            <td>{{ c.created_at|date:"M d" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-muted">No recent complaints.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="row mt-5">
+    <div class="col-md-6 mb-4">
+      <div class="card p-4 h-100" style="background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
+        <h3 style="color:#fff; margin-bottom: 20px;"><i class="bi bi-shield-lock"></i> Admin Users</h3>
+        <div class="table-responsive">
+          <table class="table table-custom mb-0">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for admin in admin_users %}
+              <tr>
+                <td>{{ admin.username }}</td>
+                <td>{{ admin.email }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="2" class="text-center text-muted">No admins found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+      <div class="card p-4 h-100" style="background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
+        <h3 style="color:#fff; margin-bottom: 20px;"><i class="bi bi-person-badge"></i> Student Users</h3>
+        <div class="table-responsive">
+          <table class="table table-custom mb-0">
+            <thead>
+              <tr>
+                <th>Name / Email</th>
+                <th>Reg. No</th>
+                <th>Room</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for student in student_users %}
+              <tr>
+                <td>{{ student.first_name|default:student.email }}</td>
+                <td>{{ student.register_number|default:"-" }}</td>
+                <td>{{ student.student_profile.room.room_number|default:"-" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="3" class="text-center text-muted">No students found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-5">
+    <div class="col-12">
+      <div class="card p-4" style="background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
+        <h3 style="color:#fff; margin-bottom: 20px;">
+           <i class="bi bi-terminal"></i> Database Operations Console
+        </h3>
+        <p style="color: rgba(255,255,255,0.8); font-size: 14px;">
+           Execute raw SQL queries to manage or kick users, update configurations, etc. <br>
+           <em>Warning: Use carefully as these modify the database directly. Example: <code>DELETE FROM startpage_user WHERE username='troublemaker';</code></em>
+        </p>
+
+        {% if sql_error %}
+          <div class="alert alert-danger" style="background: rgba(220, 53, 69, 0.2); border: 1px solid #dc3545; color: #ffcccc; border-radius: 10px;">
+            <strong>Error:</strong> {{ sql_error }}
+          </div>
+        {% endif %}
+        
+        {% if sql_result %}
+          {% if sql_result.rows %}
+            <!-- For SELECT queries -->
+            <div class="table-responsive mb-3 mt-3">
+              <table class="table table-custom table-sm" style="font-size: 14px;">
+                <thead>
+                  <tr>
+                    {% for col in sql_result.columns %}
+                    <th>{{ col }}</th>
+                    {% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in sql_result.rows %}
+                  <tr>
+                    {% for cell in row %}
+                    <td>{{ cell }}</td>
+                    {% endfor %}
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="{{ sql_result.columns|length }}" class="text-center">No rows returned.</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <!-- For INSERT, UPDATE, DELETE queries -->
+            <div class="alert alert-success" style="background: rgba(40, 167, 69, 0.2); border: 1px solid #28a745; color: #ccffcc; border-radius: 10px;">
+              {{ sql_result }}
+            </div>
+          {% endif %}
+        {% endif %}
+
+        <form method="POST" class="mt-3">
+          {% csrf_token %}
+          <div class="mb-3" style="border: 1px solid rgba(255,255,255,0.3); border-radius: 10px; overflow: hidden;">
+            <textarea id="sql-editor" name="raw_sql" class="form-control" placeholder="Enter SQL query here..."></textarea>
+          </div>
+          <button type="submit" name="execute_sql" class="btn btn-danger px-4" style="border-radius: 8px;"><i class="bi bi-play-fill"></i> Run Query</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- CodeMirror JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/sql/sql.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var editor = CodeMirror.fromTextArea(document.getElementById('sql-editor'), {
+      mode: 'text/x-sql',
+      theme: 'monokai',
+      lineNumbers: true,
+      lineWrapping: true,
+      matchBrackets: true,
+      viewportMargin: Infinity
+    });
+    
+    // Style adjustments to fit premium theme
+    editor.getWrapperElement().style.background = 'rgba(0, 0, 0, 0.6)';
+    editor.getWrapperElement().style.height = 'auto';
+    editor.getWrapperElement().style.minHeight = '150px';
+    editor.getWrapperElement().style.fontFamily = 'monospace';
+    editor.getWrapperElement().style.fontSize = '16px';
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HostelSys</title>
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Bootstrap CSS (Alternative CDN via cdnjs) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        /* Global Box Sizing Reset to prevent overflow if CDN fails */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        /* Force full height and reset margins */
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        /* Body Styling - Premium Purple Theme */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 100%) !important;
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
+            color: #fff !important;
+        }
+
+        /* Subtle pattern overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(#ffffff05 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Fixed Navbar */
+        .navbar-custom {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            /* Fixed height */
+            padding: 0 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #2b0036;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .navbar-brand-text {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #ff7eb3, #7a6bff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 2.5rem;
+        }
+
+        .navbar-menu a {
+            color: #e0e0e0;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: color 0.3s;
+        }
+
+        .navbar-menu a:hover {
+            color: #fff;
+        }
+
+        .logout-btn-navbar {
+            padding: 8px 16px;
+            background: linear-gradient(45deg, #ff7eb3, #7a6bff);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .logout-btn-navbar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 126, 179, 0.4);
+        }
+
+        /* Main App Container */
+        .app-root {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Auth Wrapper - Centering Logic */
+        .auth-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding-top: 80px;
+            /* Navbar offset */
+            padding-bottom: 40px;
+        }
+
+        /* Card Designs */
+        .student-auth-card {
+            background: linear-gradient(135deg, #4a148c, #7b1fa2);
+            border: 4px solid #000000;
+            border-radius: 30px;
+            padding: 3rem 4rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            text-align: center;
+            position: relative;
+            margin: 0 20px;
+            /* Ensure spacing on small screens */
+        }
+
+        .student-signup-card {
+            max-width: 500px;
+        }
+
+        /* Icon */
+        .student-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+            font-size: 2.5rem;
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Typography */
+        .card-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        /* Form Elements */
+        .mb-4 {
+            margin-bottom: 1.5rem;
+        }
+
+        /* Password Toggle Styles */
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #666;
+            z-index: 10;
+        }
+
+        .password-toggle:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 2px solid transparent !important;
+            border-radius: 12px;
+            padding: 0.8rem 1.2rem;
+            font-size: 1rem;
+            color: #333 !important;
+            width: 100%;
+        }
+
+        .form-control:focus, .form-select:focus {
+            outline: none !important;
+            border-color: #ff7eb3 !important;
+            box-shadow: 0 0 0 4px rgba(255, 126, 179, 0.2) !important;
+        }
+
+        .btn-auth {
+            background: #000;
+            color: #fff;
+            font-weight: 700;
+            padding: 1rem;
+            border-radius: 12px;
+            width: 100%;
+            border: none;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-auth:hover {
+            transform: translateY(-2px);
+            background: #222;
+        }
+
+        .auth-link {
+            display: block;
+            margin-top: 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .auth-link:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+
+        /* Helper for center text */
+        .text-center {
+            text-align: center;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .navbar-custom {
+                padding: 0 2rem;
+            }
+
+            .student-auth-card {
+                padding: 2rem;
+            }
+
+            .card-title {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleButtons = document.querySelectorAll('.password-toggle');
+
+            toggleButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const wrapper = this.closest('.password-wrapper');
+                    const input = wrapper.querySelector('input');
+                    const icon = this.querySelector('i');
+
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.remove('bi-eye-slash');
+                        icon.classList.add('bi-eye');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.remove('bi-eye');
+                        icon.classList.add('bi-eye-slash');
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    {% block navbar %}
+    <nav class="navbar-custom" style="box-sizing: border-box;">
+        <a href="/" class="navbar-brand-text">HostelSys</a>
+        <div class="navbar-menu">
+            <a href="#">Help</a>
+            <a href="#">Mission</a>
+            <a href="#">About</a>
+            {% if user.is_authenticated %}
+            <form action="{% url 'logout' %}" method="post" style="display: inline; margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn-navbar">Logout</button>
+            </form>
+            {% endif %}
+        </div>
+    </nav>
+    {% endblock %}
+
+    <div class="app-root">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+</body>
+
+</html>

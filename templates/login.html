@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="main-wrapper auth-wrapper">
+  <div class="main-container">
+    <div class="card shadow p-4 auth-card" style="max-width:480px;width:100%;">
+      <h3 class="mb-3">Login</h3>
+
+    {% if form.errors %}
+    <div class="alert alert-danger">
+        Please correct the errors below.
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label for="id_username" class="form-label">Username</label>
+            <input type="text" name="username" autofocus required maxlength="150" class="form-control" id="id_username">
+        </div>
+
+        <div class="mb-3">
+            <label for="id_password" class="form-label">Password</label>
+            <input type="password" name="password" required class="form-control" id="id_password">
+        </div>
+
+        <button class="btn btn-primary">Login</button>
+    </form>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

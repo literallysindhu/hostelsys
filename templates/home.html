@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+  /* Entrance and subtle pulse animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(12px)
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0)
+    }
+  }
+
+  @keyframes softPulse {
+    0% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-4px);
+    }
+
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  /* Layout - Perfectly Centered */
+  .main-wrapper {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    /* Move content to top */
+    align-items: center;
+    /* Horizontal Center */
+    padding-top: 90px;
+    /* Offset fixed navbar with less bottom space */
+    padding-bottom: 40px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .main-container {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero {
+    text-align: center;
+    width: 100%;
+    margin-bottom: 60px;
+    /* Balance space between text and cards */
+  }
+
+  /* Typography & Animations (Preserved) */
+  .site-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 4.2rem;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.92);
+    animation: fadeInUp .9s ease both;
+  }
+
+  .title-hostel {
+    background: linear-gradient(90deg, #ff7a7a, #ff9fbf);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .title-sys {
+    background: linear-gradient(90deg, #b065ff, #d8a8ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.88);
+    text-align: center;
+    margin-bottom: 24px;
+    animation: fadeInUp .95s ease .08s both;
+  }
+
+  .iam {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-top: 10px;
+    text-align: center;
+    animation: fadeInUp .95s ease .16s both;
+  }
+
+  /* Cards Layout */
+  .cards {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .card-large {
+    flex: 1;
+    min-width: 320px;
+    max-width: 400px;
+    /* Prevent excessive stretching on huge screens */
+    border-radius: 28px;
+    padding: 56px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform .22s cubic-bezier(.2, .9, .2, 1), box-shadow .22s ease;
+    animation: fadeInUp .9s ease .24s both;
+    text-decoration: none;
+    /* Ensure no underline */
+  }
+
+  .card-large:nth-child(1) {
+    animation-delay: .24s
+  }
+
+  .card-large:nth-child(2) {
+    animation-delay: .30s
+  }
+
+  .card-large:hover {
+    transform: translateY(-12px) scale(1.01);
+    box-shadow: 0 48px 140px rgba(101, 40, 255, 0.22);
+  }
+
+  .admin-card {
+    background: linear-gradient(135deg, #7e39e9, #6430b0);
+  }
+
+  .student-card {
+    background: linear-gradient(135deg, #8650ff, #6b3acc);
+  }
+
+  .icon-stroke {
+    width: 96px;
+    height: 96px;
+    margin-bottom: 28px;
+  }
+
+  .role-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .role-note {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.98rem;
+    text-align: center;
+  }
+
+  @media (max-width:991px) {
+    .site-title {
+      font-size: 2.8rem;
+    }
+
+    .cards {
+      flex-direction: column;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .card-large {
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+
+    .site-title,
+    .subtitle,
+    .iam,
+    .card-large {
+      animation: none;
+      transition: none
+    }
+  }
+</style>
+
+<div class="main-wrapper">
+  <div class="main-container">
+    <section class="hero">
+      <div class="site-title"><span class="title-hostel">Hostel</span><span class="title-sys">Sys</span> - A Hub for
+        Hostellers</div>
+      <div class="subtitle">Because a Home away from Home, shouldn't feel complicated.</div>
+      <div class="iam">I Am..</div>
+    </section>
+
+    <div class="cards">
+      <a href="{% url 'login_admin' %}" class="card-large admin-card">
+        <svg class="icon-stroke" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="ag1" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#ff9fbf" />
+              <stop offset="100%" stop-color="#8b3ef2" />
+            </linearGradient>
+          </defs>
+          <path d="M12 12a4 4 0 100-8 4 4 0 000 8z" stroke="url(#ag1)" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <path d="M3 20a9 9 0 0118 0" stroke="url(#ag1)" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        <div class="role-label">An Admin</div>
+        <div class="role-note">Manage rooms, students and complaints</div>
+      </a>
+
+      <a href="{% url 'login_student' %}" class="card-large student-card">
+        <svg class="icon-stroke" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="sg1" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#ff7a7a" />
+              <stop offset="100%" stop-color="#4cc3ff" />
+            </linearGradient>
+          </defs>
+          <path d="M12 3l9 4-9 4-9-4 9-4z" stroke="url(#sg1)" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <path d="M3 11v6a2 2 0 002 2h14a2 2 0 002-2v-6" stroke="url(#sg1)" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        <div class="role-label">A Student</div>
+        <div class="role-note">Check your dashboard and services</div>
+      </a>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+  .main-wrapper {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 300px;
+  }
+
+  .hero {
+    text-align: center;
+    width: 100%;
+  }
+
+  .main-container {
+    width: 1100px;
+    max-width: 100%;
+    padding: 70px 0;
+    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .site-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 4.2rem;
+    line-height: 1;
+    margin-bottom: 12px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .title-hostel {
+    background: linear-gradient(90deg, #ff7a7a, #ff9fbf);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent
+  }
+
+  .title-sys {
+    background: linear-gradient(90deg, #b065ff, #d8a8ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent
+  }
+
+  .subtitle {
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.88);
+    text-align: center;
+    margin-bottom: 28px
+  }
+
+  .iam {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 34px 0;
+    text-align: center
+  }
+
+  .cards {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+    margin-top: 60px
+  }
+
+  .card-large {
+    flex: 1;
+    min-width: 320px;
+    border-radius: 28px;
+    padding: 56px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform .22s cubic-bezier(.2, .9, .2, 1), box-shadow .22s ease;
+    margin-left: 0;
+    margin-right: 0
+  }
+
+  .card-large:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 48px 120px rgba(101, 40, 255, 0.18)
+  }
+
+  .admin-card {
+    background: linear-gradient(135deg, #7e39e9, #6430b0);
+  }
+
+  .student-card {
+    background: linear-gradient(135deg, #8650ff, #6b3acc);
+  }
+
+  .icon-stroke {
+    width: 96px;
+    height: 96px;
+    margin-bottom: 28px
+  }
+
+  .role-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: #fff;
+    margin-bottom: 8px
+  }
+
+  .role-note {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.98rem;
+    text-align: center
+  }
+
+  @media (max-width:991px) {
+    .main-container {
+      padding: 48px 28px
+    }
+
+    .site-title {
+      font-size: 2.4rem
+    }
+
+    .cards {
+      flex-direction: column;
+      gap: 22px
+    }
+
+    .card-large {
+      padding: 36px
+    }
+  }
+</style>
+
+<div class="main-wrapper">
+  <div class="main-container">
+    <section class="hero">
+      <div class="site-title"><span class="title-hostel">Hostel</span><span class="title-sys">Sys</span> - A Hub for
+        Hostellers</div>
+      <div class="subtitle">Because a Home away from Home, shouldn't feel complicated.</div>
+      <div class="iam">I Am..</div>
+    </section>
+
+    <div class="cards">
+      <a href="{% url 'login_admin' %}" class="card-large admin-card text-decoration-none">
+        <svg class="icon-stroke" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="ag1b" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#ff9fbf" />
+              <stop offset="100%" stop-color="#8b3ef2" />
+            </linearGradient>
+          </defs>
+          <path d="M12 12a4 4 0 100-8 4 4 0 000 8z" stroke="url(#ag1b)" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <path d="M3 20a9 9 0 0118 0" stroke="url(#ag1b)" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        <div class="role-label">An Admin</div>
+        <div class="role-note">Manage rooms, students and complaints</div>
+      </a>
+
+      <a href="{% url 'login_student' %}" class="card-large student-card text-decoration-none">
+        <svg class="icon-stroke" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="sg1b" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#ff7a7a" />
+              <stop offset="100%" stop-color="#4cc3ff" />
+            </linearGradient>
+          </defs>
+          <path d="M12 3l9 4-9 4-9-4 9-4z" stroke="url(#sg1b)" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <path d="M3 11v6a2 2 0 002 2h14a2 2 0 002-2v-6" stroke="url(#sg1b)" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        <div class="role-label">A Student</div>
+        <div class="role-note">Check your dashboard and services</div>
+      </a>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
