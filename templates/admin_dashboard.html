@@ -270,6 +270,15 @@
            <em>Warning: Use carefully as these modify the database directly. Example: <code>DELETE FROM startpage_user WHERE username='troublemaker';</code></em>
         </p>
 
+        <div class="mb-4 p-3" style="background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+          <strong style="color: #fff; display: block; margin-bottom: 10px;"><i class="bi bi-table"></i> Available Database Tables:</strong>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            {% for table in db_tables %}
+              <span class="badge" style="background: rgba(79, 172, 254, 0.2); color: #4facfe; border: 1px solid rgba(79, 172, 254, 0.4); font-family: monospace; font-size: 13px; cursor: pointer;" onclick="document.getElementById('sql-editor').value = 'SELECT * FROM ' + '{{ table }}' + ';'; document.querySelector('.CodeMirror').CodeMirror.setValue('SELECT * FROM ' + '{{ table }}' + ';');">{{ table }}</span>
+            {% endfor %}
+          </div>
+        </div>
+
         {% if sql_error %}
           <div class="alert alert-danger" style="background: rgba(220, 53, 69, 0.2); border: 1px solid #dc3545; color: #ffcccc; border-radius: 10px;">
             <strong>Error:</strong> {{ sql_error }}

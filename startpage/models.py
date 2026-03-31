@@ -8,12 +8,27 @@ class User(AbstractUser):
         ADMIN = 'ADMIN', 'Admin'
         STUDENT = 'STUDENT', 'Student'
 
+    class Department(models.TextChoices):
+        CSE = 'CSE', 'Computer Science'
+        ECE = 'ECE', 'Electronics & Comm'
+        MECH = 'MECH', 'Mechanical Engineering'
+        CIVIL = 'CIVIL', 'Civil Engineering'
+        IT = 'IT', 'Information Technology'
+
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.STUDENT)
     register_number = models.CharField(max_length=20, unique=True, null=True, blank=True, db_index=True)
-    department = models.CharField(max_length=100, blank=True, null=True)
+    department = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True, 
+        choices=Department.choices,
+        verbose_name='Department (CSE, ECE, MECH, CIVIL, IT)'
+    )
     phone = models.CharField(max_length=15, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    REQUIRED_FIELDS = ['email', 'department']
 
     class Meta:
         ordering = ['-created_at']
@@ -55,7 +70,7 @@ class Room(models.Model):
         unique_together = ('hostel', 'room_number')
         constraints = [
             models.CheckConstraint(
-                check=models.Q(current_occupancy__lte=models.F('capacity')),
+                condition=models.Q(current_occupancy__lte=models.F('capacity')),
                 name='occupancy_limit'
             )
         ]

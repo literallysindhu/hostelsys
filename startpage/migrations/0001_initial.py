@@ -130,7 +130,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='room',
-            constraint=models.CheckConstraint(check=models.Q(('current_occupancy__lte', models.F('capacity'))), name='occupancy_limit'),
+            constraint=models.CheckConstraint(condition=models.Q(('current_occupancy__lte', models.F('capacity'))), name='occupancy_limit'),
         ),
         migrations.AlterUniqueTogether(
             name='room',

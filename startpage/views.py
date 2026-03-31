@@ -46,7 +46,7 @@ def students(request):
     students_list = StudentProfile.objects.select_related('user', 'room', 'room__hostel').order_by('-created_at')
     
     # Department Filtering for Admins
-    if not request.user.is_superuser:
+    if request.user.department:
         students_list = students_list.filter(department=request.user.department)
 
     available_rooms = Room.objects.all()
@@ -77,7 +77,7 @@ def complaints(request):
     complaints_list = Complaint.objects.select_related('student', 'room').order_by('-created_at')
     
     # Department Filtering for Admins
-    if not request.user.is_superuser:
+    if request.user.department:
         complaints_list = complaints_list.filter(student__student_profile__department=request.user.department)
     
     # Generate simple AI recommendations if missing
@@ -141,7 +141,7 @@ def outpasses(request):
 
     if is_admin:
         outpasses_list = Outpass.objects.select_related('student', 'student__student_profile').order_by('-created_at')
-        if not request.user.is_superuser:
+        if request.user.department:
             outpasses_list = outpasses_list.filter(student__student_profile__department=request.user.department)
     else:
         outpasses_list = request.user.outpasses.all()
@@ -180,9 +180,14 @@ class AdminLoginView(LoginView):
         # Only allow staff/superuser accounts on the admin login page
         user = form.get_user()
         if user.is_staff or user.is_superuser:
-            # Save selected department choice to admin's profile/field
-            user.department = form.cleaned_data.get('department')
-            user.save()
+            selected_dept = form.cleaned_data.get('department')
+            if user.department and selected_dept and user.department != selected_dept:
+                form.add_error(None, f'Access Denied: You are a {user.department} admin, restricting you from the {selected_dept} terminal.')
+                return self.form_invalid(form)
+            elif not user.department and selected_dept:
+                # Assign selected department choice to admin's profile/field if none
+                user.department = selected_dept
+                user.save(update_fields=['department'])
             return super().form_valid(form)
         form.add_error(None, 'This account is not an admin. Please use the student login.')
         return self.form_invalid(form)
@@ -297,7 +302,7 @@ def dashboard(request):
         q_complaints = Complaint.objects.all()
         q_outpasses = Outpass.objects.all()
         
-        if not request.user.is_superuser:
+        if request.user.department:
             q_students = q_students.filter(department=request.user.department)
             q_complaints = q_complaints.filter(student__student_profile__department=request.user.department)
             q_outpasses = q_outpasses.filter(student__student_profile__department=request.user.department)
@@ -309,11 +314,15 @@ def dashboard(request):
         
         User = get_user_model()
         admin_users_base = User.objects.filter(models.Q(is_staff=True) | models.Q(role=User.Role.ADMIN))
-        if not request.user.is_superuser:
+        if request.user.department:
             admin_users_base = admin_users_base.filter(department=request.user.department)
         admin_users = admin_users_base.distinct().order_by('-date_joined')
         
         student_users = User.objects.filter(role=User.Role.STUDENT, student_profile__in=q_students).select_related('student_profile', 'student_profile__room').order_by('-date_joined')
+        
+        # Get all database tables to show in the console reference
+        db_tables = connection.introspection.table_names()
+        
         context = {
             'room_count': room_count,
             'student_count': student_count,
@@ -324,6 +333,7 @@ def dashboard(request):
             'sql_error': sql_error,
             'admin_users': admin_users,
             'student_users': student_users,
+            'db_tables': db_tables,
         }
         return render(request, 'admin_dashboard.html', context)
     

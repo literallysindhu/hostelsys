@@ -1,5 +1,4 @@
 import os
-import dj_database_url
 from pathlib import Path
 from django.urls import reverse_lazy
 
@@ -10,7 +9,7 @@ SECRET_KEY = 'django-insecure-=jk+t9!u124usr(=yp*)^bslsv$6137^m7d0ucle*q2-(5&atz
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.vercel.app']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 INSTALLED_APPS = [
@@ -26,7 +25,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -68,9 +66,7 @@ DATABASES = {
     }
 }
 
-supabase_url = os.environ.get("DATABASE_URL")
-if supabase_url:
-    DATABASES['default'] = dj_database_url.parse(supabase_url, conn_max_age=600)
+
 
 
 AUTH_PASSWORD_VALIDATORS = [
