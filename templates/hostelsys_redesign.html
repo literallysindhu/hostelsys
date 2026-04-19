@@ -521,15 +521,25 @@
 
       {% if messages %}
         {% for message in messages %}
-          <div class="alert-error">
-            <i class="bi bi-exclamation-triangle-fill"></i> {{ message }}
+          <!-- Allow classes based on message.tags so we don't just use alert-error unconditionally -->
+          <div class="alert-error" style="{% if message.tags == 'success' %}background:rgba(56,239,125,0.1); border-color:rgba(56,239,125,0.3); color:#38ef7d;{% endif %}">
+            <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% else %}bi-exclamation-triangle-fill{% endif %}"></i> {{ message }}
           </div>
         {% endfor %}
       {% endif %}
       {% if form.errors %}
-        <div class="alert-error">
-          <i class="bi bi-exclamation-triangle-fill"></i> Please verify credentials.
-        </div>
+        {% for field in form %}
+          {% for error in field.errors %}
+            <div class="alert-error">
+              <i class="bi bi-exclamation-triangle-fill"></i> {{ field.label }}: {{ error }}
+            </div>
+          {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+          <div class="alert-error">
+            <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+          </div>
+        {% endfor %}
       {% endif %}
 
       <div style="display:flex;gap:8px;margin-bottom:1.4rem;">
@@ -609,6 +619,21 @@
 
       <form method="post" action="{% url 'signup_student' %}">
         {% csrf_token %}
+
+        {% if form.errors %}
+          {% for field in form %}
+            {% for error in field.errors %}
+              <div class="alert-error">
+                <i class="bi bi-exclamation-triangle-fill"></i> {{ field.label }}: {{ error }}
+              </div>
+            {% endfor %}
+          {% endfor %}
+          {% for error in form.non_field_errors %}
+            <div class="alert-error">
+              <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+            </div>
+          {% endfor %}
+        {% endif %}
 
         <div class="name-row">
           <div class="form-field">

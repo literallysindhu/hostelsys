@@ -7,10 +7,8 @@
     <title>HostelSys</title>
 
     <!-- Fonts -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;600&display=swap"
-        rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Gloock:ital@0;1&display=swap" rel="stylesheet">
+    
     <!-- Bootstrap CSS (Alternative CDN via cdnjs) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
 
@@ -18,6 +16,22 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
 
     <style>
+        :root {
+            --bg-deep:    #0e0618;
+            --bg-mid:     #160d24;
+            --bg-surface: #1e1230;
+            --bg-card:    #261740;
+            --bg-input:   #1a0f2e;
+            --accent-rose: #e8608a;
+            --accent-violet: #8b6be8;
+            --accent-soft: #c084d4;
+            --text-primary: #f4eeff;
+            --text-secondary: #a99cc4;
+            --text-muted: #6d5f8a;
+            --border-subtle: rgba(180,140,255,0.12);
+            --border-mid: rgba(180,140,255,0.22);
+        }
+
         /* Global Box Sizing Reset to prevent overflow if CDN fails */
         *, *::before, *::after {
             box-sizing: border-box;
@@ -31,53 +45,52 @@
             padding: 0;
             width: 100%;
             overflow-x: hidden;
+            background: var(--bg-deep) !important;
+            color: var(--text-primary) !important;
+            font-family: 'DM Sans', system-ui, sans-serif !important;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Body Styling - Premium Purple Theme */
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 100%) !important;
-            background-repeat: no-repeat !important;
-            background-attachment: fixed !important;
-            color: #fff !important;
-        }
-
-        /* Subtle pattern overlay */
+        /* ── Ambient background orbs ── */
         body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: radial-gradient(#ffffff05 1px, transparent 1px);
-            background-size: 30px 30px;
+            content: '';
+            position: fixed; inset: 0; z-index: -1;
+            background:
+                radial-gradient(ellipse 60% 50% at 20% 10%, rgba(139,107,232,0.14) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 60% at 85% 80%, rgba(232,96,138,0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 40% at 55% 45%, rgba(192,132,212,0.07) 0%, transparent 60%);
             pointer-events: none;
-            z-index: -1;
+        }
+
+        /* ── Dot grid ── */
+        body::after {
+            content: '';
+            position: fixed; inset: 0; z-index: -1;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.028) 1px, transparent 1px);
+            background-size: 28px 28px;
+            pointer-events: none;
         }
 
         /* Fixed Navbar */
         .navbar-custom {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 80px;
-            /* Fixed height */
-            padding: 0 4rem;
+            top: 0; left: 0; right: 0; z-index: 1000;
+            height: 68px;
+            padding: 0 3rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #2b0036;
-            z-index: 1000;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            background: rgba(14, 6, 24, 0.75);
+            backdrop-filter: blur(20px) saturate(1.4);
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .navbar-brand-text {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 700;
-            font-size: 1.8rem;
-            background: linear-gradient(90deg, #ff7eb3, #7a6bff);
+            font-family: 'Gloock', serif;
+            font-style: italic;
+            font-size: 1.55rem;
+            letter-spacing: -0.01em;
+            background: linear-gradient(110deg, #e8608a 0%, #c084d4 45%, #8b6be8 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -86,36 +99,42 @@
 
         .navbar-menu {
             display: flex;
+            align-items: center;
             gap: 2.5rem;
         }
 
         .navbar-menu a {
-            color: #e0e0e0;
+            color: var(--text-secondary);
             text-decoration: none;
-            font-weight: 500;
-            font-size: 1rem;
-            transition: color 0.3s;
+            font-weight: 400;
+            font-size: 0.9rem;
+            letter-spacing: 0.01em;
+            transition: color 0.2s ease;
+            position: relative;
         }
 
         .navbar-menu a:hover {
-            color: #fff;
+            color: var(--text-primary);
         }
 
         .logout-btn-navbar {
-            padding: 8px 16px;
-            background: linear-gradient(45deg, #ff7eb3, #7a6bff);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.95rem;
+            padding: 8px 18px;
+            background: linear-gradient(135deg, #9060e0 0%, #c060a0 100%);
+            border: none; border-radius: 11px;
+            color: #fff; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
+            letter-spacing: 0.02em; cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.18s ease, box-shadow 0.2s ease;
+            position: relative; overflow: hidden;
         }
-
+        .logout-btn-navbar::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent 60%);
+            border-radius: inherit;
+        }
         .logout-btn-navbar:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(255, 126, 179, 0.4);
+            opacity: 0.92;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(144,96,224,0.35);
         }
 
         /* Main App Container */

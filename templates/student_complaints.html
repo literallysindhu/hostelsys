@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<main class="dashboard-content" style="padding: 110px 40px 50px 40px; min-height: calc(100vh - 80px);">
+  <div class="mb-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-light mb-3" style="border-radius: 12px; padding: 8px 15px;"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    <h1 style="font-size: 48px; font-weight: 700; color: #fff; margin-bottom: 0;">Hostel Complaints</h1>
+    <p style="color: rgba(255,255,255,0.7); font-size: 18px;">Submit and track your maintenance requests</p>
+  </div>
+
+  <div class="row" style="width: 100%;">
+    <!-- My Complaints Column -->
+    <div class="col-md-7 mb-4">
+      <div class="card p-4 h-100" style="background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
+          <h3 style="color:#fff; margin-bottom: 20px;">My Complaints History</h3>
+          {% if my_complaints %}
+          <ul style="list-style: none; padding: 0;">
+              {% for c in my_complaints %}
+              <li style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid var(--border-subtle);">
+                  <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                      <div>
+                          <strong style="color: #ff7eb3; font-size: 18px;">{{ c.category }}</strong>
+                          <br><small style="color: var(--text-muted);">{{ c.created_at|date:"F d, Y h:i A" }}</small>
+                      </div>
+                      <span class="badge bg-{% if c.status == 'PENDING' %}warning{% elif c.status == 'IN_PROGRESS' %}info{% else %}success{% endif %}" style="font-size: 14px; padding: 8px 12px;">{{ c.status }}</span>
+                  </div>
+                  <p style="margin: 15px 0 0 0; color: #ddd; font-size: 15px; line-height: 1.5;">{{ c.description }}</p>
+                  
+                  {% if c.admin_note %}
+                  <div style="margin-top: 15px; padding: 15px; background: rgba(122, 107, 255, 0.15); border-left: 4px solid #7a6bff; border-radius: 8px; font-size: 14px;">
+                      <strong style="color: #7a6bff;"><i class="bi bi-chat-dots-fill"></i> Warden/Admin Reply:</strong><br>
+                      <span style="color: #eee; display: block; margin-top: 5px;">{{ c.admin_note }}</span>
+                  </div>
+                  {% endif %}
+              </li>
+              {% endfor %}
+          </ul>
+          {% else %}
+          <div style="padding: 40px 20px; text-align: center; background: rgba(0,0,0,0.2); border-radius: 15px;">
+             <i class="bi bi-inbox" style="font-size: 40px; color: var(--text-muted); margin-bottom: 15px; display: block;"></i>
+             <p style="color: rgba(255,255,255,0.6); font-size: 16px;">You haven't submitted any complaints yet.</p>
+          </div>
+          {% endif %}
+      </div>
+    </div>
+
+    <!-- Submit Form Column -->
+    <div class="col-md-5 mb-4">
+      <div class="card p-4 h-100" style="background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
+          <h3 style="color:#fff; margin-bottom: 20px;">Submit New Request</h3>
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }}" style="padding: 15px; border-radius: 12px; margin-bottom: 20px; background: rgba(40, 167, 69, 0.2); color: #38ef7d; border: 1px solid rgba(56, 239, 125, 0.3);">
+                <i class="bi bi-check-circle-fill"></i> {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+          <form method="POST">
+              {% csrf_token %}
+              <div class="mb-4">
+                  <label style="color: var(--text-secondary); margin-bottom:10px; font-weight: 500;">Category</label>
+                  <select name="category" class="form-control" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border-mid); border-radius: 12px; padding: 12px;" required>
+                      <option value="" disabled selected>Select an issue category</option>
+                      <option style="color: #000;" value="Maintenance">Maintenance (Furniture, doors, etc.)</option>
+                      <option style="color: #000;" value="Electrical">Electrical (Lights, fans, sockets)</option>
+                      <option style="color: #000;" value="Plumbing">Plumbing (Taps, leaks, washrooms)</option>
+                      <option style="color: #000;" value="Cleaning">Cleaning & Hygiene</option>
+                      <option style="color: #000;" value="Other">Other Issues</option>
+                  </select>
+              </div>
+              <div class="mb-4">
+                  <label style="color: var(--text-secondary); margin-bottom:10px; font-weight: 500;">Detailed Description</label>
+                  <textarea name="description" class="form-control" rows="5" placeholder="Please describe the issue clearly (e.g. Fan regulator not working in room 101)" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border-mid); border-radius: 12px; padding: 15px;" required></textarea>
+              </div>
+              <button type="submit" name="submit_complaint" class="btn btn-primary w-100" style="background: linear-gradient(135deg, #9060e0 0%, #c060a0 100%); border: none; border-radius: 12px; padding: 14px; font-weight: 600; font-size: 16px;"><i class="bi bi-send-fill"></i> File Complaint</button>
+          </form>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -10,4 +10,7 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('outpasses/', views.outpasses, name='outpasses'),
     path('mess-menu/', views.mess_menu, name='mess_menu'),
+    path('snacks/', views.snacks, name='snacks'),
+    path('process_payment/', views.process_payment, name='process_payment'),
+    path('student-fees/', views.student_fees, name='student_fees'),
 ]

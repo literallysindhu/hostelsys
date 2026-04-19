@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+/* Payment Portal Modal */
+.payment-modal-overlay {
+  position: fixed; inset: 0; background: rgba(14, 6, 24, 0.85);
+  backdrop-filter: blur(15px); z-index: 2000;
+  display: flex; justify-content: center; align-items: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+}
+.payment-modal-overlay.active {
+  opacity: 1; pointer-events: all;
+}
+.payment-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-mid);
+  border-radius: 24px; width: 100%; max-width: 440px;
+  padding: 40px; text-align: center; position: relative;
+  box-shadow: 0 25px 80px rgba(0,0,0,0.8), 0 0 40px var(--glow-violet);
+  transform: translateY(30px) scale(0.95); transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.payment-modal-overlay.active .payment-modal {
+  transform: translateY(0) scale(1);
+}
+
+.close-modal {
+  position: absolute; top: 20px; right: 20px; font-size: 24px;
+  background: none; border: none; color: var(--text-muted); cursor: pointer;
+  transition: 0.3s;
+}
+.close-modal:hover { color: var(--accent-rose); transform: scale(1.1); }
+
+/* Steps */
+.pay-step { display: none; animation: payFadeIn 0.5s ease forwards; }
+.pay-step.active { display: block; }
+@keyframes payFadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* PIN Input */
+.pin-input-container { display: flex; gap: 12px; justify-content: center; margin: 35px 0; }
+.pin-digit {
+  width: 55px; height: 65px; font-size: 32px; text-align: center;
+  background: rgba(0,0,0,0.4); border: 2px solid var(--border-subtle);
+  border-radius: 12px; color: #fff; font-family: monospace; outline: none;
+  transition: all 0.3s ease; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+}
+.pin-digit:focus { 
+  border-color: var(--accent-violet); 
+  box-shadow: 0 0 20px var(--glow-violet), inset 0 2px 10px rgba(0,0,0,0.5); 
+  transform: translateY(-2px);
+}
+
+/* Animations */
+.pay-loader {
+  width: 70px; height: 70px; margin: 0 auto 25px auto;
+  border: 4px solid var(--border-subtle);
+  border-top-color: var(--accent-violet); 
+  border-radius: 50%;
+  animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.success-checkmark {
+  width: 90px; height: 90px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; background: linear-gradient(135deg, #11998e, #38ef7d);
+  color: #fff; font-size: 45px; margin: 0 auto 25px auto;
+  animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  box-shadow: 0 10px 30px rgba(56, 239, 125, 0.4);
+}
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  80% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.btn-pay-action {
+  background: linear-gradient(135deg, #9060e0 0%, #c060a0 100%);
+  color: white; border: none; padding: 14px 20px; border-radius: 12px;
+  font-weight: 600; font-size: 16px; width: 100%; cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-pay-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px var(--glow-violet);
+}
+.btn-pay-action:disabled {
+  opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none;
+}
+</style>
+
+<main class="dashboard-content" style="padding: 110px 40px 50px 40px; min-height: calc(100vh - 80px);">
+  <div class="mb-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-light mb-3" style="border-radius: 12px; padding: 8px 15px;"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    <h1 style="font-size: 48px; font-weight: 700; color: #fff; margin-bottom: 0;">Fee Payment Hub</h1>
+    <p style="color: rgba(255,255,255,0.7); font-size: 18px;">View pending dues and make secure payments</p>
+  </div>
+
+  <div class="row" id="fees" style="width: 100%;">
+    <div class="col-12 mb-4">
+      <div class="card p-4 mx-auto" style="background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); max-width: 1000px;">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 style="color:#fff; margin-bottom: 0;">Ledger Summary</h3>
+            {% if pending_fee %}
+            <span class="badge bg-danger" style="font-size: 14px; padding: 8px 15px;">Next Due: {{ pending_fee.semester }}</span>
+            {% else %}
+            <span class="badge bg-success" style="font-size: 14px; padding: 8px 15px;">All Dues Cleared</span>
+            {% endif %}
+          </div>
+          
+          <div class="row">
+            <div class="col-md-5 mb-4 mb-md-0">
+              <div class="p-4 h-100 d-flex flex-column justify-content-center" style="background: rgba(139, 107, 232, 0.1); border: 1px solid var(--border-mid); border-radius: 15px; text-align: center; color: white;">
+                 <h4 style="font-weight: 600; margin-bottom: 10px; color: var(--text-secondary);">Outstanding Balance</h4>
+                 {% if pending_fee %}
+                 <h1 id="outstanding-balance-text" style="font-size: 48px; font-weight: 700; margin-bottom: 20px; color: var(--accent-violet);">₹ {{ pending_fee.amount|floatformat:0 }}</h1>
+                 <button id="initiate-payment-btn" class="btn btn-light btn-lg w-100" style="background: var(--accent-violet); border: none; border-radius: 10px; font-weight: 600; color: #fff;">Pay Now</button>
+                 {% else %}
+                 <h1 id="outstanding-balance-text" style="font-size: 48px; font-weight: 700; margin-bottom: 20px; color: #38ef7d;">₹ 0</h1>
+                 <button id="initiate-payment-btn" class="btn btn-light btn-lg w-100" style="background: rgba(255,255,255,0.1); border: none; border-radius: 10px; font-weight: 600; color: var(--text-secondary);" disabled>Fully Paid</button>
+                 {% endif %}
+              </div>
+            </div>
+            <div class="col-md-7">
+              <h4 style="color:#fff; margin-bottom: 15px;">Recent Transactions</h4>
+              <ul id="dynamic-transactions" style="list-style: none; padding: 0;">
+                {% for p_fee in paid_fees %}
+                <li style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <strong style="color: #4facfe;">{{ p_fee.semester }} Fee</strong>
+                    <br><small style="color: #aaa;">{{ p_fee.paid_on|date:"M d, Y" }}</small>
+                  </div>
+                  <div>
+                    <strong style="color: #fff;">₹ {{ p_fee.amount|floatformat:0 }}</strong>
+                    <span class="badge bg-success ms-2">Completed</span>
+                  </div>
+                </li>
+                {% empty %}
+                <li style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center;">
+                  <strong style="color: var(--text-muted);">No recent transactions</strong>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Mock Payment Portal Modal -->
+<div id="payment-modal-overlay" class="payment-modal-overlay">
+  <div class="payment-modal">
+    <button class="close-modal"><i class="bi bi-x-lg"></i></button>
+    
+    <!-- Step 1: Summary -->
+    <div id="step-1-summary" class="pay-step active">
+      <div style="font-size: 40px; color: var(--accent-soft); margin-bottom: 15px;"><i class="bi bi-shield-check"></i></div>
+      <h2 style="color: var(--text-primary); font-weight: 700;">Secure Checkout</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 30px;">HostelSys Encrypted Payment Gateway</p>
+      
+      <div style="background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin-bottom: 30px; text-align: left; border: 1px solid var(--border-subtle);">
+         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+           <span style="color: var(--text-muted);">Biller</span>
+           <span style="color: #fff; font-weight: 500;">University Hostel HQ</span>
+         </div>
+         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+           <span style="color: var(--text-muted);">Description</span>
+           <span style="color: #fff; font-weight: 500;">Hostel Outstanding Dues</span>
+         </div>
+         <hr style="border-color: var(--border-mid); margin: 15px 0;">
+         <div style="display: flex; justify-content: space-between; align-items: center;">
+           <span style="color: var(--text-secondary); font-size: 18px;">Total Amount</span>
+           <span style="color: var(--accent-violet); font-size: 28px; font-weight: 700;">₹{{ pending_fee.amount|floatformat:0 }}</span>
+         </div>
+      </div>
+      
+      <button id="proceed-to-pin" class="btn-pay-action">Proceed to Pay</button>
+    </div>
+    
+    <!-- Step 2: Enter PIN -->
+    <div id="step-2-pin" class="pay-step">
+      <div style="font-size: 40px; color: var(--accent-violet); margin-bottom: 15px;"><i class="bi bi-lock-fill"></i></div>
+      <h2 style="color: var(--text-primary); font-weight: 700;">Enter Bank PIN</h2>
+      <p style="color: var(--text-secondary);">Type any 4 digits to simulate the transaction.</p>
+      
+      <div class="pin-input-container">
+        <input type="password" class="pin-digit" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+        <input type="password" class="pin-digit" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+        <input type="password" class="pin-digit" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+        <input type="password" class="pin-digit" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+      </div>
+      
+      <button id="verify-pin-btn" class="btn-pay-action" disabled>Verify & Pay</button>
+    </div>
+    
+    <!-- Step 3: Loading -->
+    <div id="step-3-loading" class="pay-step">
+      <div style="padding: 40px 0;">
+        <div class="pay-loader"></div>
+        <h3 style="color: var(--text-primary); font-weight: 600; margin-bottom: 10px;">Processing Bank Protocol</h3>
+        <p style="color: var(--text-muted); font-size: 14px; animation: pulse 2s infinite;">Please do not close this window or hit back.</p>
+      </div>
+    </div>
+    
+    <!-- Step 4: Success -->
+    <div id="step-4-success" class="pay-step">
+      <div style="padding: 30px 0;">
+        <div class="success-checkmark"><i class="bi bi-check-lg"></i></div>
+        <h2 style="color: #38ef7d; font-weight: 700; margin-bottom: 15px;">Payment Successful!</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 30px;">Your hostel outstanding fee has been securely remitted. Transaction ID: #TXN-845920</p>
+        
+        <button class="btn-pay-action close-modal" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border-mid); color: #fff; position: relative; right: auto; top: auto;">Return to Dashboard</button>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+<script>
+// Payment Portal Logic
+document.addEventListener('DOMContentLoaded', () => {
+  const payBtn = document.getElementById('initiate-payment-btn');
+  const payModal = document.getElementById('payment-modal-overlay');
+  const closeBtn = document.querySelector('.close-modal');
+  const steps = document.querySelectorAll('.pay-step');
+  
+  // Step 1: Summary
+  const proceedToPinBtn = document.getElementById('proceed-to-pin');
+  
+  // Step 2: PIN
+  const pinInputs = document.querySelectorAll('.pin-digit');
+  const verifyPinBtn = document.getElementById('verify-pin-btn');
+  
+  // Outstanding bal
+  const balText = document.getElementById('outstanding-balance-text');
+  
+  function showStep(stepId) {
+    steps.forEach(s => s.classList.remove('active'));
+    document.getElementById(stepId).classList.add('active');
+  }
+
+  if (payBtn) {
+    payBtn.addEventListener('click', () => {
+      payModal.classList.add('active');
+      showStep('step-1-summary');
+      
+      // Reset PIN inputs
+      pinInputs.forEach(i => i.value = '');
+      verifyPinBtn.disabled = true;
+    });
+  }
+  
+  closeBtn.addEventListener('click', () => {
+    payModal.classList.remove('active');
+  });
+
+  proceedToPinBtn.addEventListener('click', () => {
+    showStep('step-2-pin');
+    setTimeout(() => pinInputs[0].focus(), 100);
+  });
+  
+  // PIN Input Logic
+  pinInputs.forEach((input, index) => {
+    input.addEventListener('input', (e) => {
+      if (e.target.value.length > 1) {
+        e.target.value = e.target.value.slice(0, 1);
+      }
+      if (e.target.value.length === 1) {
+        if (index < pinInputs.length - 1) {
+          pinInputs[index + 1].focus();
+        }
+      }
+      
+      // Check if all filled
+      const allFilled = Array.from(pinInputs).every(inp => inp.value.length === 1);
+      verifyPinBtn.disabled = !allFilled;
+    });
+    
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !e.target.value && index > 0) {
+        pinInputs[index - 1].focus();
+      }
+    });
+  });
+
+  verifyPinBtn.addEventListener('click', () => {
+    // Step 3: Loading
+    showStep('step-3-loading');
+    
+    // Simulate banking verification API call
+    setTimeout(() => {
+       // Fire request to actually process payment via Backend Real Database call
+       fetch("{% url 'process_payment' %}", {
+         method: "POST",
+         headers: {
+           "X-CSRFToken": "{{ csrf_token }}",
+           "Content-Type": "application/json"
+         }
+       }).then(res => res.json()).then(data => {
+         if(data.status === 'success') {
+           // Step 4: Success
+           showStep('step-4-success');
+           
+           // Update Dashboard UI dynamically based on the returned response
+           balText.textContent = "₹ 0";
+           balText.style.color = "#38ef7d";
+           payBtn.textContent = "Fully Paid";
+           payBtn.disabled = true;
+           payBtn.style.background = "rgba(255,255,255,0.1)";
+           payBtn.style.color = "var(--text-secondary)";
+           
+           // Inject into visual transaction array
+           const receiptArea = document.getElementById('dynamic-transactions');
+           const newTx = document.createElement('li');
+           newTx.style.cssText = "background: rgba(56, 239, 125, 0.1); border: 1px solid #38ef7d; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; animation: payFadeIn 0.8s ease forwards;";
+           if(receiptArea && receiptArea.innerHTML.includes('No recent transactions')) {
+               receiptArea.innerHTML = '';
+           }
+           newTx.innerHTML = `
+              <div>
+                <strong style="color: #38ef7d;">Latest Fee Cleared</strong>
+                <br><small style="color: var(--text-secondary);">Just now</small>
+              </div>
+              <div>
+                <strong style="color: #fff;">₹ ${data.amount}</strong>
+                <span class="badge bg-success ms-2">Completed</span>
+              </div>
+           `;
+           if(receiptArea) receiptArea.prepend(newTx);
+         } else {
+           alert("Payment failed: " + data.message);
+           payModal.classList.remove('active');
+         }
+       }).catch(err => {
+           alert("Network error: " + err);
+       });
+       
+    }, 2800);
+  });
+});
+</script>
+{% endblock %}

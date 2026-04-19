@@ -1,5 +1,5 @@
-from django.http import HttpResponse
-from .models import Room, StudentProfile, Complaint, Outpass, MessMenu
+from django.http import HttpResponse, JsonResponse
+from .models import Room, StudentProfile, Complaint, Outpass, MessMenu, Fee
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.views import LoginView
@@ -10,6 +10,9 @@ from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import connection, models
+from django.db.models import Sum
+from django.utils import timezone
+import json
 
 def home(request):
     return render(request, 'home.html')
@@ -54,53 +57,76 @@ def students(request):
 
 @login_required
 def complaints(request):
-    if not (request.user.is_staff or request.user.is_superuser):
-        return redirect('dashboard')
-        
-    if request.method == 'POST' and 'update_status' in request.POST:
-        complaint_id = request.POST.get('complaint_id')
-        new_status = request.POST.get('status')
-        admin_note = request.POST.get('admin_note')
-        if complaint_id:
-            try:
-                c = Complaint.objects.get(id=complaint_id)
-                if new_status:
-                    c.status = new_status
-                if admin_note is not None:
-                    c.admin_note = admin_note
-                c.save()
-                messages.success(request, f'Complaint updated successfully!')
-            except Complaint.DoesNotExist:
-                messages.error(request, 'Complaint not found!')
-            return redirect('complaints')
+    is_admin = request.user.is_staff or request.user.is_superuser
+    
+    if is_admin:
+        if request.method == 'POST' and 'update_status' in request.POST:
+            complaint_id = request.POST.get('complaint_id')
+            new_status = request.POST.get('status')
+            admin_note = request.POST.get('admin_note')
+            if complaint_id:
+                try:
+                    c = Complaint.objects.get(id=complaint_id)
+                    if new_status:
+                        c.status = new_status
+                    if admin_note is not None:
+                        c.admin_note = admin_note
+                    c.save()
+                    messages.success(request, f'Complaint updated successfully!')
+                except Complaint.DoesNotExist:
+                    messages.error(request, 'Complaint not found!')
+                return redirect('complaints')
 
-    complaints_list = Complaint.objects.select_related('student', 'room').order_by('-created_at')
-    
-    # Department Filtering for Admins
-    if request.user.department:
-        complaints_list = complaints_list.filter(student__student_profile__department=request.user.department)
-    
-    # Generate simple AI recommendations if missing
-    for c in complaints_list:
-        if not c.ai_recommendation:
-            rec = "Assign relevant staff to handle this."
-            cat = c.category.lower()
-            if "maintenance" in cat:
-                rec = "Schedule maintenance team review within 24hrs."
-            elif "electrical" in cat:
-                rec = "Dispatch campus electrician immediately. Check circuit breakers."
-            elif "plumbing" in cat:
-                rec = "Call plumbing contractor. Instruct student to locate water valve."
-            elif "cleaning" in cat:
-                rec = "Add to priority list for housekeeping tomorrow morning."
+        complaints_list = Complaint.objects.select_related('student', 'room').order_by('-created_at')
+        
+        # Department Filtering for Admins
+        if request.user.department:
+            complaints_list = complaints_list.filter(student__student_profile__department=request.user.department)
+        
+        # Generate simple AI recommendations if missing
+        for c in complaints_list:
+            if not c.ai_recommendation:
+                rec = "Assign relevant staff to handle this."
+                cat = c.category.lower()
+                if "maintenance" in cat:
+                    rec = "Schedule maintenance team review within 24hrs."
+                elif "electrical" in cat:
+                    rec = "Dispatch campus electrician immediately. Check circuit breakers."
+                elif "plumbing" in cat:
+                    rec = "Call plumbing contractor. Instruct student to locate water valve."
+                elif "cleaning" in cat:
+                    rec = "Add to priority list for housekeeping tomorrow morning."
+                
+                c.ai_recommendation = rec
+                c.save()
+        
+        context = {
+            'complaints_list': complaints_list,
+        }
+        return render(request, 'complaints.html', context)
+    else:
+        # STUDENT LOGIC
+        try:
+            student_profile = request.user.student_profile
+            room = student_profile.room
+        except StudentProfile.DoesNotExist:
+            room = None
             
-            c.ai_recommendation = rec
-            c.save()
-    
-    context = {
-        'complaints_list': complaints_list,
-    }
-    return render(request, 'complaints.html', context)
+        if request.method == 'POST' and 'submit_complaint' in request.POST:
+            category = request.POST.get('category')
+            description = request.POST.get('description')
+            if category and description:
+                Complaint.objects.create(
+                    student=request.user,
+                    room=room,
+                    category=category,
+                    description=description
+                )
+                messages.success(request, 'Complaint submitted successfully!')
+                return redirect('complaints')
+        
+        my_complaints = request.user.complaints.all()
+        return render(request, 'student_complaints.html', {'my_complaints': my_complaints})
 
 @login_required
 def outpasses(request):
@@ -323,6 +349,11 @@ def dashboard(request):
         # Get all database tables to show in the console reference
         db_tables = connection.introspection.table_names()
         
+        # Admin fee tracking queries
+        total_collected = Fee.objects.filter(payment_status=Fee.PaymentStatus.PAID).aggregate(Sum('amount'))['amount__sum'] or 0
+        total_pending = Fee.objects.filter(payment_status=Fee.PaymentStatus.PENDING).aggregate(Sum('amount'))['amount__sum'] or 0
+        recent_payments = Fee.objects.filter(payment_status=Fee.PaymentStatus.PAID).select_related('student').order_by('-paid_on', '-updated_at')[:5]
+        
         context = {
             'room_count': room_count,
             'student_count': student_count,
@@ -334,6 +365,9 @@ def dashboard(request):
             'admin_users': admin_users,
             'student_users': student_users,
             'db_tables': db_tables,
+            'total_collected': total_collected,
+            'total_pending': total_pending,
+            'recent_payments': recent_payments,
         }
         return render(request, 'admin_dashboard.html', context)
     
@@ -341,7 +375,6 @@ def dashboard(request):
     student_profile = None
     room = None
     hostel = None
-    my_complaints = []
     latest_outpass = None
     todays_menu = None
     try:
@@ -349,36 +382,103 @@ def dashboard(request):
         room = student_profile.room
         if room:
             hostel = room.hostel
-        my_complaints = request.user.complaints.all()[:3]
         latest_outpass = request.user.outpasses.first()
         
         import datetime
         today_code = datetime.datetime.now().strftime('%a').upper()
-        # Mapping for SUN -> SUN, but some locales might differ, so hardcode a small map if needed
-        # Our model uses MON, TUE, WED, THU, FRI, SAT, SUN
         todays_menu = MessMenu.objects.filter(day=today_code).first()
     except StudentProfile.DoesNotExist:
         pass
-        
-    if request.method == 'POST' and 'submit_complaint' in request.POST:
-        category = request.POST.get('category')
-        description = request.POST.get('description')
-        if category and description:
-            Complaint.objects.create(
-                student=request.user,
-                room=room,
-                category=category,
-                description=description
-            )
-            messages.success(request, 'Complaint submitted successfully!')
-            return redirect('dashboard')
-    
+            
     context = {
         'student_profile': student_profile,
         'room': room,
         'hostel': hostel,
-        'my_complaints': my_complaints,
         'latest_outpass': latest_outpass,
         'todays_menu': todays_menu,
     }
     return render(request, 'dashboard.html', context)
+
+@login_required
+def student_fees(request):
+    if request.user.is_staff or request.user.is_superuser:
+        return redirect('dashboard')
+    pending_fee = Fee.objects.filter(student=request.user, payment_status=Fee.PaymentStatus.PENDING).first()
+    paid_fees = Fee.objects.filter(student=request.user, payment_status=Fee.PaymentStatus.PAID).order_by('-paid_on', '-updated_at')[:5]
+    return render(request, 'student_fees.html', {
+        'pending_fee': pending_fee,
+        'paid_fees': paid_fees,
+    })
+
+@login_required
+def process_payment(request):
+    if request.method == 'POST':
+        pending_fee = Fee.objects.filter(student=request.user, payment_status=Fee.PaymentStatus.PENDING).first()
+        if pending_fee:
+            pending_fee.payment_status = Fee.PaymentStatus.PAID
+            pending_fee.paid_on = timezone.now().date()
+            pending_fee.save()
+            return JsonResponse({'status': 'success', 'amount': str(pending_fee.amount)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request or no pending fee.'}, status=400)
+
+
+@login_required
+def snacks(request):
+    import time
+    import random
+    
+    snack_reservations = request.session.get('snack_reservations', 0)
+    snack_lockout_time = request.session.get('snack_lockout_time', 0)
+    active_otps = request.session.get('active_otps', [])
+    current_time = time.time()
+    
+    if snack_lockout_time and current_time > snack_lockout_time:
+        snack_reservations = 0
+        snack_lockout_time = 0
+        active_otps = []
+        request.session['snack_reservations'] = 0
+        request.session['snack_lockout_time'] = 0
+        request.session['active_otps'] = []
+        
+    is_snack_locked = snack_lockout_time and current_time <= snack_lockout_time
+
+    if request.method == 'POST' and 'reserve_snack' in request.POST:
+        if is_snack_locked:
+            messages.error(request, 'You are locked out of reserving snacks! Try again later.')
+        elif snack_reservations >= 3:
+            request.session['snack_lockout_time'] = current_time + 86400  # 24 hours
+            messages.error(request, 'Limit reached! Reserving too many snacks. You are locked out for 24 hours.')
+            is_snack_locked = True
+        else:
+            snack_reservations += 1
+            request.session['snack_reservations'] = snack_reservations
+            snack_name = request.POST.get('snack_name', 'Snack')
+            
+            # Generate OTP
+            otp = str(random.randint(100000, 999999))
+            active_otps.append({'snack': snack_name, 'otp': otp})
+            request.session['active_otps'] = active_otps
+            
+            messages.success(request, f'{snack_name} reserved! Your Vending OTP is {otp}')
+            
+            if snack_reservations >= 3:
+                request.session['snack_lockout_time'] = current_time + 86400
+                messages.warning(request, 'You have reached your daily limit of 3 snacks. You are now locked out for 24 hours.')
+                is_snack_locked = True
+        return redirect('snacks')
+        
+    available_snacks = [
+        {"name": "Lays Classic", "stock": 14},
+        {"name": "Kurkure Masala", "stock": 8},
+        {"name": "Oreo Pack", "stock": 21},
+        {"name": "Snickers Bar", "stock": 5},
+        {"name": "Dairy Milk Silk", "stock": 12},
+    ]
+    
+    context = {
+        'snack_reservations': snack_reservations,
+        'is_snack_locked': is_snack_locked,
+        'available_snacks': available_snacks,
+        'active_otps': active_otps,
+    }
+    return render(request, 'snacks.html', context)
