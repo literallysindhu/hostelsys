@@ -12,7 +12,6 @@ env.bak/
 venv.bak/
 
 # Django
-db.sqlite3
 *.log
 static/
 media/
